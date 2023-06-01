@@ -1,75 +1,77 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-const TaskList = () => {
-  const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState('');
-  const [editMode, setEditMode] = useState(false);
-  const [editIndex, setEditIndex] = useState(null);
-  const [editedTask, setEditedTask] = useState('');
+const useTaskManager = () => {
+  const [task, setTask] = React.useState('');
+  const [tasks, setTasks] = React.useState([]);
+  const [editMode, setEditMode] = React.useState(false);
+  const [editIndex, setEditIndex] = React.useState(null);
 
-  const handleInputChange = (event) => {
-    setNewTask(event.target.value);
+  const handleChange = (event) => {
+    setTask(event.target.value);
   };
 
-  const handleAddTask = () => {
-    if (newTask.trim() !== '') {
-      setTasks([...tasks, newTask]);
-      setNewTask('');
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (task.trim() !== '') {
+      if (editMode) {
+        const updatedTasks = [...tasks];
+        updatedTasks[editIndex] = task;
+        setTasks(updatedTasks);
+        setEditMode(false);
+        setEditIndex(null);
+      } else {
+        setTasks([...tasks, task]);
+      }
+      setTask('');
     }
   };
 
-  const handleEditTask = (index) => {
+  const handleDelete = (index) => {
+    const updatedTasks = tasks.filter((_, i) => i !== index);
+    setTasks(updatedTasks);
+  };
+
+  const handleEdit = (index) => {
     setEditMode(true);
     setEditIndex(index);
-    setEditedTask(tasks[index]);
+    setTask(tasks[index]);
   };
 
-  const handleSaveTask = () => {
-    const updatedTasks = [...tasks];
-    updatedTasks[editIndex] = editedTask;
-    setTasks(updatedTasks);
-    setEditMode(false);
-    setEditIndex(null);
-    setEditedTask('');
+  return {
+    task,
+    tasks,
+    editMode,
+    handleChange,
+    handleSubmit,
+    handleDelete,
+    handleEdit,
   };
+};
 
-  const handleCancelEdit = () => {
-    setEditMode(false);
-    setEditIndex(null);
-    setEditedTask('');
-  };
-
-  const handleDeleteTask = (index) => {
-    const updatedTasks = [...tasks];
-    updatedTasks.splice(index, 1);
-    setTasks(updatedTasks);
-  };
+const TodoList = () => {
+  const {
+    task,
+    tasks,
+    editMode,
+    handleChange,
+    handleSubmit,
+    handleDelete,
+    handleEdit,
+  } = useTaskManager();
 
   return (
     <div>
-      <h2>Lista de tareas</h2>
-      <input type="text" value={newTask} onChange={handleInputChange} />
-      <button onClick={handleAddTask}>Agregar tarea</button>
+      <h1>Lista de Tareas</h1>
+      <form onSubmit={handleSubmit}>
+        <input type="text" value={task} onChange={handleChange} />
+        <button type="submit">{editMode ? 'Actualizar tarea' : 'Agregar tarea'}</button>
+      </form>
       <ul>
         {tasks.map((task, index) => (
           <li key={index}>
-            {index === editIndex && editMode ? (
-              <>
-                <input
-                  type="text"
-                  value={editedTask}
-                  onChange={(e) => setEditedTask(e.target.value)}
-                />
-                <button onClick={handleSaveTask}>Guardar</button>
-                <button onClick={handleCancelEdit}>Cancelar</button>
-              </>
-            ) : (
-              <>
-                {task}
-                <button onClick={() => handleEditTask(index)}>Editar</button>
-                <button onClick={() => handleDeleteTask(index)}>Eliminar</button>
-              </>
-            )}
+            {task}
+            <button onClick={() => handleEdit(index)}>Editar</button>
+            <button onClick={() => handleDelete(index)}>Eliminar</button>
           </li>
         ))}
       </ul>
@@ -77,4 +79,4 @@ const TaskList = () => {
   );
 };
 
-export default TaskList;
+export default TodoList;
